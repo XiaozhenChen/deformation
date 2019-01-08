@@ -1,18 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h> /* offsetof */
-#include "C:\CXZ\deformation\deformation\GL\glew.h"
-#include "C:\CXZ\deformation\deformation\GL\glut.h"
+#include "..\GL\glew.h"
+#include "..\GL\glut.h"
 #include <iostream>
 #include <vector>
 #include<atlimage.h >
 
-#include "C:\CXZ\deformation\deformation\include\Eigen\Eigen\Eigen"
+#include "..\include\Eigen\Eigen\Eigen"
 
 using namespace Eigen;
 using namespace std;
 
-#include "C:\CXZ\deformation\deformation\shader_lib\shader.h"
+#include "..\shader_lib\shader.h"
 
 //#include "LeastSquaresSparseSolver.h"
 
@@ -23,6 +23,7 @@ using namespace std;
 #ifdef __cplusplus
 extern "C"
 #endif
+
 FILE __iob_func[3] = { __acrt_iob_func(0),__acrt_iob_func(1),__acrt_iob_func(2) };
 
 extern "C" { FILE _iob[3] = { __acrt_iob_func(0),__acrt_iob_func(1),__acrt_iob_func(2) }; }
@@ -36,52 +37,39 @@ void idle(void);
 GLuint program;
 GLuint program1;
 
+unsigned int  PG = 0;
 //---------------------以下是自己定义的东东---------------------------------
-void mouse(int button, int state, int x, int y);//鼠标按键处理函数
 
+void mouse(int button, int state, int x, int y);
 
-
-void mousepos(int x, int y);//鼠标位置处理函数
-//void addpoint(float x, float y);//添加一个顶点
-float* absline(float* in, unsigned int numin, unsigned int* numout, float value);//将绘制的线条进行采样，变成多边形，即将密集的顶点采样为稀疏顶点，in:输入，numin: 输入顶点数量，numout：输出顶点数量，value：采样长度，值越小精度越高
-/*triangulateio triangulate(float* points, unsigned int numberofpoints);//将多边形轮廓顶点三角化
-void updateBuffer(GLint vbo, void* pointlist, unsigned int size);//更新VBO,IBO 或者贴图坐标
-void updateMesh(triangulateio obj);
-GLuint ATLLoadTexture(const char *fileName);
-void initVAOLine();
-void initVAOMesh();
-void initVAOMarker();
-void reset();
-
-void getneighbor(triangulateio obj);
-void findboundary(triangulateio obj);
 int getnearmarkeri(float glx, float gly, float& dist);
-void getlap();
-void setb();
-void setsolver(LeastSquaresSparseSolver &solver);
-void solve();
 
+
+
+//
 int window_width;//当前窗口宽度（像素）
 int window_height;//当前窗口高度（像素）
 
-bool drawmode = true;//画轮廓模式
-bool mouseleft = false;//鼠标左键按下的标志
-bool meshok = false;//已完成三角化网格的标志
+
+
+
+
+//
+bool drawmode = true;
+bool mouseleft = false;
+bool meshok = false;
 bool draged = false;
 int lx, ly;
+//
 
+
+//
 triangulateio obj;//储存三角化后的网格数据
-float linelist[40960];//三角化完成后储存用于显示的网格线条列表,测试时用的，已经没用了
-float* poly;//采样后的多边形轮廓点
-unsigned int numpoly;//轮廓点数量
-float oldpointlist[40960];//如名
 
-//marker
-float* markerdef;//控制点形状多边形
-int markerlenth = 0;//控制点形状多边形点的数量
+//
 vector<int> markerpointlist;//控制点下标
-float* marker;//控制点形状当前实例
-float markersize = 9;//控制点大小(像素)，自己控制
+
+
 
 //raw line (user input)
 float rawline[20480];//用户绘制的线条
@@ -89,37 +77,7 @@ int numrawline = 0;//点数量
 
 int selectindex = -1;//当前选择的控制点下标
 
-float *lap;//轮廓 laplace 
-vector<int>* neighborlist;//neighborlist
-float* boundarypoints;//轮廓点
-int numboundarypoints;//轮廓点数量
-vector<int> boundarypointi, boundaryedges, internaledges, internalpointi;
 
-vector<MatrixXf> RotList;
-//存模型
-GLuint vaoMesh;
-GLuint vboMesh;
-GLuint iboMesh;
-GLuint vboTexc;
-
-//存控制点
-GLuint vaoMarker;
-GLuint vboMarker;
-GLuint iboMarker;
-
-//存绘制线条
-GLuint vaoLine;
-GLuint vboLine;
-GLuint iboLine;
-
-//存贴图
-GLuint text;
-
-bool fix = true;
-
-LeastSquaresSparseSolver solverx, solvery;
-float **b = new float*[2];
-*/
 struct Vertex
 {
 	float position[2];
@@ -146,10 +104,103 @@ int ind[] = { 0,1,2,1,2,3 };
 
 
 int main(int argc, char *argv[]) {
+
+
+
+
 	std::cout << "hello" << std::endl;
 	getchar();
 }
 
+
+int getnearmarkeri(float glx, float gly, float& dist)  // 可以优化，一个点如何找距离最近  // 当前是计算机距离，然后遍历
+{
+	float dis, mindis = 999.0;
+	int index = -1;
+
+	for (int i = 0; i < markerpointlist.size(), i++)
+	{ //计算pow的办法
+		dis = pow(obj.pointlist[2 * markerpointlist[i]] - glx, 2) + pow(obj.pointlist[2 * markerpointlist[i] + 1] - gly, 2);
+		if (dis < mindis)
+		{
+			mindis = dis;
+			index = i;
+		}
+	}
+
+	dist = mindis;
+	return index;
+}
+
+
+void mouse(int button, int state, int x, int y) {
+	switch (state) {
+	case GLUT_DOWN:
+		switch (button)
+		{
+		case GLUT_LEFT_BUTTON:
+		{
+			mouseleft = true;
+			lx = x;
+			ly = y;
+
+			if (!meshok)
+			{
+				meshok = false;//清除标志
+				markerpointlist.clear();
+				numrawline = 0;
+				drawmode = true;
+			}
+			else
+			{
+				drawmode = false;
+
+				if (markerpointlist.size() > 0)
+				{
+					float dist;
+					float glx = (x - 0.5*window_width) / (0.5*window_width);
+					float gly = (y - 0.5*window_height) / (0.5*window_height);
+
+					int pin = getnearmarkeri(glx, gly, dist);
+
+					if (dist < 0.1)
+					{
+						selectindex = pin;
+					}
+				}
+
+			}
+			
+
+
+		}
+		case GLUT_RIGHT_BUTTON:
+		{}
+		case GLUT_MIDDLE_BUTTON:
+		{}
+		default:
+			break;
+		}
+		break;
+
+	case GLUT_UP:
+		switch (button)
+		{
+		case GLUT_LEFT_BUTTON:
+		{}
+		case GLUT_RIGHT_BUTTON:
+		{}
+		case GLUT_MIDDLE_BUTTON:
+		{}
+		default:
+			break;
+		}
+		break;
+
+	default:
+		break;
+	 }
+}
 
 
 /*void mouse(int button, int state, int x, int y)
