@@ -16,7 +16,7 @@ using namespace std;
 
 //#include "LeastSquaresSparseSolver.h"
 
-//#include "triangle.cpp"
+#include "triangle.cpp"
 
 //#pragma comment(lib, "legacy_stdio_definitions.lib")
 
@@ -118,7 +118,7 @@ int getnearmarkeri(float glx, float gly, float& dist)  // 可以优化，一个点如何找
 	float dis, mindis = 999.0;
 	int index = -1;
 
-	for (int i = 0; i < markerpointlist.size(), i++)
+	for (int i = 0; i < markerpointlist.size(); i++)
 	{ //计算pow的办法
 		dis = pow(obj.pointlist[2 * markerpointlist[i]] - glx, 2) + pow(obj.pointlist[2 * markerpointlist[i] + 1] - gly, 2);
 		if (dis < mindis)
@@ -162,7 +162,7 @@ void mouse(int button, int state, int x, int y) {
 					float gly = (y - 0.5*window_height) / (0.5*window_height);
 
 					int pin = getnearmarkeri(glx, gly, dist);
-
+					
 					if (dist < 0.1)
 					{
 						selectindex = pin;
